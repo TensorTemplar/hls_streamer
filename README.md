@@ -1,3 +1,11 @@
+[![MainCI](https://github.com/TensorTemplar/hls_streamer/actions/workflows/main-ci.yaml/badge.svg)](https://github.com/TensorTemplar/hls_streamer/actions/workflows/main-ci.yaml)
+
+Code complexity score:
+![a](https://s3.eu-central-1.amazonaws.com/public-store.droidcraft.io/hls_streamer/ci/badge_A.svg)
+![b](https://s3.eu-central-1.amazonaws.com/public-store.droidcraft.io/hls_streamer/ci/badge_B.svg)
+![c](https://s3.eu-central-1.amazonaws.com/public-store.droidcraft.io/hls_streamer/ci/badge_C.svg)
+![d](https://s3.eu-central-1.amazonaws.com/public-store.droidcraft.io/hls_streamer/ci/badge_D.svg)
+
 ## Synopsis
 
 A simple RTSP to HLS stream converter using a ffmpeg subprocess with some scaffolding to make it easy to scale by running a container per source RTSP(s) stream.
