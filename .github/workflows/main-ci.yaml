@@ -1,0 +1,80 @@
+name: CI
+on:
+  push:
+    branches:
+      - 'main'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install AWS CLI
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y awscli
+
+    - name: Clean workspace
+      uses: AutoModality/action-clean@v1
+
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Build the docker images
+      run: | 
+          DOCKER_BUILDKIT=1 docker build -t droidcraft-hls-streamer:dev -f Dockerfile .
+          DOCKER_BUILDKIT=1 docker build -t droidcraft-hls-streamer:test -f Dockerfile.test .
+
+    - name: Start dependent containers
+      run: | 
+        docker run -d --net=host --name etcd quay.io/coreos/etcd:v3.5.11
+        docker run -d --net=host --name testcontainer droidcraft-hls-streamer:test sleep infinity
+      
+    - name: Run tests
+      run: docker exec testcontainer pytest -vv --junit-xml=junit/junit_results.xml
+
+    - name: Copy junit results
+      run: docker cp testcontainer:/usr/src/app/junit/junit_results.xml .
+      
+    - name: Publish Test Report
+      uses: mikepenz/action-junit-report@v3
+      if: always() # always run even if the previous step fails
+      with:
+        report_paths: 'junit*results.xml'
+
+    - name: Run complexity analysis
+      run: docker exec testcontainer bash -c "radon cc . >> cc_results.txt && radon mi . >> mi_results.txt"       
+
+    - name: Copy Radon CC Analysis results
+      run: docker cp testcontainer:/usr/src/app/cc_results.txt .
+
+    - name: Parse Radon CC Analysis results and create badges
+      run: |
+        A_COUNT=$(grep -o ' - A' cc_results.txt | wc -l)
+        B_COUNT=$(grep -o ' - B' cc_results.txt | wc -l)
+        C_COUNT=$(grep -o ' - C' cc_results.txt | wc -l)
+        D_COUNT=$(grep -o ' - D' cc_results.txt | wc -l)
+        docker exec testcontainer bash -c "mkdir -p /usr/src/app/badges"
+        docker exec testcontainer bash -c "python /usr/src/app/radon_shields.py A $A_COUNT green > /usr/src/app/badges/badge_A.svg"
+        docker exec testcontainer bash -c "python /usr/src/app/radon_shields.py B $B_COUNT yellow > /usr/src/app/badges/badge_B.svg"
+        docker exec testcontainer bash -c "python /usr/src/app/radon_shields.py C $C_COUNT orange > /usr/src/app/badges/badge_C.svg"
+        docker exec testcontainer bash -c "python /usr/src/app/radon_shields.py D $D_COUNT red > /usr/src/app/badges/badge_D.svg"
+    - name: Copy badges to Host
+      run: docker cp testcontainer:/usr/src/app/badges .
+    - name: Upload badges to S3
+      run: |
+        aws s3 cp badges/badge_A.svg s3://public-store.droidcraft.io/hls_streamer/ci/badge_A.svg
+        aws s3 cp badges/badge_B.svg s3://public-store.droidcraft.io/hls_streamer/ci/badge_B.svg
+        aws s3 cp badges/badge_C.svg s3://public-store.droidcraft.io/hls_streamer/ci/badge_C.svg
+        aws s3 cp badges/badge_D.svg s3://public-store.droidcraft.io/hls_streamer/ci/badge_D.svg
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
+    - name: Shut down compose
+      if: always()
+      run: | 
+        docker stop testcontainer
+        docker stop etcd
+
+    - name: Clean workspace
+      uses: AutoModality/action-clean@v1

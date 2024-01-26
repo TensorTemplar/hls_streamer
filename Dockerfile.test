@@ -1,0 +1,9 @@
+FROM droidcraft-hls-streamer:dev
+
+WORKDIR /usr/src/app
+
+# Copy test requirements and install
+COPY test_requirements.txt .
+COPY test .
+RUN pip install --no-cache-dir -r test_requirements.txt
+
