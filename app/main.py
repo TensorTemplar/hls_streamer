@@ -12,7 +12,6 @@ from .helpers import get_etcd_client
 from .helpers import get_ip_address
 from .helpers import register_service_with_etcd
 from .helpers import start_ffmpeg
-from .helpers import stop_ffmpeg
 from .logger import get_logger
 
 
@@ -20,7 +19,6 @@ logger = get_logger(__name__)
 
 PORT = int(os.getenv("PORT", 8081))
 ENABLE_DISCOVERY = os.getenv("ENABLE_DISCOVERY", "False")
-ETCD_CLIENT = None
 
 
 @asynccontextmanager
