@@ -32,7 +32,7 @@ jobs:
       run: docker exec testcontainer coverage run -m pytest -vv --junit-xml=junit/junit_results.xml && docker exec testcontainer coverage xml
 
     - name: Copy junit results
-      run: docker cp testcontainer:/usr/src/app/junit/junit_results.xml .
+      run: docker cp testcontainer:/usr/src/app/test/junit/junit_results.xml .
 
     - name: Publish Test Report
       uses: mikepenz/action-junit-report@v3
@@ -44,7 +44,7 @@ jobs:
       run: docker exec testcontainer bash -c "radon cc . >> cc_results.txt && radon mi . >> mi_results.txt"
 
     - name: Copy Radon CC Analysis results
-      run: docker cp testcontainer:/usr/src/app/cc_results.txt .
+      run: docker cp testcontainer:/usr/src/app/test/cc_results.txt .
 
     - name: Parse Radon CC Analysis results and create badges
       run: |
