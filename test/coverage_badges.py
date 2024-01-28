@@ -29,8 +29,8 @@ def create_coverage_badge(coverage: float, color: str, output_path: str) -> None
     right_text_length_pixels = len(coverage_text) * font_size
 
     # Calculate the width of each field
-    left_field_width = left_text_length_pixels * 1.2
-    right_field_width = right_text_length_pixels * 1.2
+    left_field_width = left_text_length_pixels * 0.8
+    right_field_width = right_text_length_pixels * 0.8
     image_width = left_field_width + right_field_width
 
     svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="{image_width}" height="20" role="img" aria-label="Coverage: {coverage_text}">
