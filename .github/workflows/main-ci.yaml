@@ -58,15 +58,17 @@ jobs:
         docker exec testcontainer bash -c "python /usr/src/app/test/radon_shields.py C $C_COUNT orange > /usr/src/app/badges/badge_C.svg"
         docker exec testcontainer bash -c "python /usr/src/app/test/radon_shields.py D $D_COUNT red > /usr/src/app/badges/badge_D.svg"
         docker exec testcontainer bash -c "python /usr/src/app/test/coverage_badges.py coverage.xml /usr/src/app/badges/codecov.svg"
+
     - name: Copy badges to Host
       run: docker cp testcontainer:/usr/src/app/badges .
+      
     - name: Upload badges to S3
       run: |
         aws s3 cp badges/badge_A.svg s3://public-store.droidcraft.io/hls_streamer/ci/badge_A.svg
         aws s3 cp badges/badge_B.svg s3://public-store.droidcraft.io/hls_streamer/ci/badge_B.svg
         aws s3 cp badges/badge_C.svg s3://public-store.droidcraft.io/hls_streamer/ci/badge_C.svg
         aws s3 cp badges/badge_D.svg s3://public-store.droidcraft.io/hls_streamer/ci/badge_D.svg
-        aws s3 cp codecov.svg s3://public-store.droidcraft.io/hls_streamer/ci/codecov.svg
+        aws s3 cp badges/codecov.svg s3://public-store.droidcraft.io/hls_streamer/ci/codecov.svg
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
