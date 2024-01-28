@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 from pydantic_settings import SettingsConfigDict
 
 
-class Settings(BaseSettings):
+class RTSPSettings(BaseSettings):
     url: str = Field(
         ...,
     )
@@ -20,3 +20,20 @@ class Settings(BaseSettings):
         if not v.startswith(("rtsp://", "rtsps://")):
             raise ValueError("Invalid RTSP URL format")
         return v
+
+
+class HLSSettings(BaseSettings):
+    hls_directory: str = Field(..., description="Directory path for storing HLS segments and playlist files.")
+    hls_time: int = Field(
+        2,
+        description="Length of each HLS segment in seconds.",
+        ge=1,
+    )
+    hls_list_size: int = Field(
+        3,
+        description="Number of segments to include in the HLS playlist.",
+        gt=0,
+    )
+    hls_flags: str = Field("delete_segments", description="Additional flags for HLS processing.")
+
+    model_config = SettingsConfigDict(env_prefix="HLS_")

@@ -3,3 +3,8 @@
 .pytest_cache
 .ipynb_checkpoints
 .vscode
+# Coverage reports
+.coverage
+htmlcov/
+coverage.*
+codecov.svg

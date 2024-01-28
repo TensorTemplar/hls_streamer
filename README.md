@@ -1,10 +1,12 @@
-[![MainCI](https://github.com/TensorTemplar/hls_streamer/actions/workflows/main-ci.yaml/badge.svg)](https://github.com/TensorTemplar/hls_streamer/actions/workflows/main-ci.yaml)
+[![MainCI](https://github.com/TensorTemplar/hls_streamer/actions/workflows/main-ci.yaml/badge.svg)](https://github.com/TensorTemplar/hls_streamer/actions/workflows/main-ci.yaml) ![poor-mans-codecov](https://s3.eu-central-1.amazonaws.com/public-store.droidcraft.io/hls_streamer/ci/codecov.svg)
 
-Code complexity score:
+Cyclomatic complexity:  
 ![a](https://s3.eu-central-1.amazonaws.com/public-store.droidcraft.io/hls_streamer/ci/badge_A.svg)
 ![b](https://s3.eu-central-1.amazonaws.com/public-store.droidcraft.io/hls_streamer/ci/badge_B.svg)
 ![c](https://s3.eu-central-1.amazonaws.com/public-store.droidcraft.io/hls_streamer/ci/badge_C.svg)
 ![d](https://s3.eu-central-1.amazonaws.com/public-store.droidcraft.io/hls_streamer/ci/badge_D.svg)
+
+
 
 ## Synopsis
 

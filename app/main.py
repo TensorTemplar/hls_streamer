@@ -6,10 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
-from .data import Settings
-from .helpers import deregister_service_with_etcd, makeup_service_name
+from .data import RTSPSettings
+from .helpers import deregister_service_with_etcd
 from .helpers import get_etcd_client
 from .helpers import get_ip_address
+from .helpers import makeup_service_name
 from .helpers import register_service_with_etcd
 from .helpers import start_ffmpeg
 from .logger import get_logger
@@ -25,23 +26,19 @@ ENABLE_DISCOVERY = os.getenv("ENABLE_DISCOVERY", "False")
 async def lifespan(app: FastAPI):
     if ENABLE_DISCOVERY == "True":
         logger.info(f"Discovery is {ENABLE_DISCOVERY}, registering in ETCD")
-        await register_service_with_etcd(
-            get_etcd_client(), makeup_service_name(Settings()), get_ip_address(), PORT
-        )
+        await register_service_with_etcd(get_etcd_client(), makeup_service_name(RTSPSettings()), get_ip_address(), PORT)
 
     yield
 
     if ENABLE_DISCOVERY == "True":
         logger.info("Unregistering in ETCD")
-        await deregister_service_with_etcd(
-            get_etcd_client(), makeup_service_name(Settings())
-        )
+        await deregister_service_with_etcd(get_etcd_client(), makeup_service_name(RTSPSettings()))
 
 
 def create_app() -> FastAPI:
     app = FastAPI(lifespan=lifespan)
     try:
-        settings = Settings()
+        settings = RTSPSettings()
     except ValidationError as e:
         print("Invalid RTSP stream configuration:", e.json())
         os._exit(1)

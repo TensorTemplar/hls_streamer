@@ -1,25 +1,30 @@
-# test/test_helpers.py
-
 import os
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
 
-from .app.helpers import deregister_service_with_etcd
-from .app.helpers import get_etcd_client
-from .app.helpers import get_hls_services_from_etcd
-from .app.helpers import get_ip_address
-from .app.helpers import register_service_with_etcd
-from .app.helpers import start_ffmpeg
+from app.data import HLSSettings
+from app.data import RTSPSettings
+from app.helpers import deregister_service_with_etcd
+from app.helpers import get_etcd_client
+from app.helpers import get_hls_services_from_etcd
+from app.helpers import get_ip_address
+from app.helpers import register_service_with_etcd
+from app.helpers import start_ffmpeg
 
 
-
-# Test start_ffmpeg function
 def test_start_ffmpeg():
     with patch("subprocess.Popen") as mock_popen:
         mock_popen.return_value = MagicMock()
-        process = start_ffmpeg("some_directory", MagicMock(url="rtsp://example.com", access_token="token"))
+        hls_settings = HLSSettings(
+            hls_directory="some_directory",
+            hls_time=2,
+            hls_list_size=3,
+            hls_flags="delete_segments",
+        )
+        rtsp_stream = RTSPSettings(url="rtsp://example.com", access_token="token")
+        process = start_ffmpeg(hls_settings, rtsp_stream)
         mock_popen.assert_called_once()
         assert process is not None
 

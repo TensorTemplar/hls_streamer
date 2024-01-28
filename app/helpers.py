@@ -1,25 +1,27 @@
 import os
 import socket
 import subprocess
+from typing import Optional
 from typing import OrderedDict
 
 from etcetra import EtcdClient
 from etcetra import HostPortPair
 
-from .data import Settings
+from .data import HLSSettings
+from .data import RTSPSettings
 from .logger import get_logger
 
 
 logger = get_logger(__name__)
 
 
-def makeup_service_name(settings: Settings) -> str:
+def makeup_service_name(settings: RTSPSettings) -> str:
     return f"hls_streamer_{settings.url.split(':')[1][-3:]}_{settings.access_token[:3]}"
 
 
-def start_ffmpeg(hls_directory: str, rtsp_stream: Settings) -> subprocess.Popen:
+def start_ffmpeg(hls_settings: HLSSettings, rtsp_stream: RTSPSettings) -> Optional[subprocess.Popen]:
     rtsp_url = f"{rtsp_stream.url}/{rtsp_stream.access_token}"
-    output_path = os.path.join(hls_directory, "stream.m3u8")
+    output_path = os.path.join(hls_settings.hls_directory, "stream.m3u8")
     command = [
         "ffmpeg",
         "-i",
@@ -29,11 +31,11 @@ def start_ffmpeg(hls_directory: str, rtsp_stream: Settings) -> subprocess.Popen:
         "-c:a",
         "aac",
         "-hls_time",
-        "2",
+        str(hls_settings.hls_time),
         "-hls_list_size",
-        "3",
+        str(hls_settings.hls_list_size),
         "-hls_flags",
-        "delete_segments",
+        hls_settings.hls_flags,
         output_path,
     ]
     try:
@@ -42,7 +44,7 @@ def start_ffmpeg(hls_directory: str, rtsp_stream: Settings) -> subprocess.Popen:
         return process
     except Exception as e:
         logger.error(f"Failed to start FFmpeg process: {e}")
-        raise
+        return None
 
 
 def get_ip_address() -> str:

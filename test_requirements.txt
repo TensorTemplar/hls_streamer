@@ -1,6 +1,7 @@
 pytest
 pytest-asyncio
-docker
+docker==7.0.0
 httpx
 mypy
 radon
+coverage
