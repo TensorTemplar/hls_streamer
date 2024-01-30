@@ -47,7 +47,7 @@ def start_ffmpeg(hls_settings: HLSSettings, rtsp_settings: RTSPSettings) -> Opti
             for line in iter(stream.readline, b""):
                 logger.info(line.decode().strip())
 
-        t = threading.Thread(target=log_output, args=(process.stdout,))
+        t = threading.Thread(target=log_output, args=(process.stdout,), daemon=True)
         t.start()
 
         return process
