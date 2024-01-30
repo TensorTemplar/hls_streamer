@@ -4,8 +4,9 @@ from unittest.mock import patch
 
 import pytest
 
-from app.data import HLSSettings
-from app.data import RTSPSettings
+from app.configuration import FeatureFlags
+from app.configuration import HLSSettings
+from app.configuration import RTSPSettings
 from app.helpers import deregister_service_with_etcd
 from app.helpers import get_etcd_client
 from app.helpers import get_hls_services_from_etcd
@@ -18,13 +19,14 @@ def test_start_ffmpeg():
     with patch("subprocess.Popen") as mock_popen:
         mock_popen.return_value = MagicMock()
         hls_settings = HLSSettings(
-            hls_directory="some_directory",
-            hls_time=2,
-            hls_list_size=3,
-            hls_flags="delete_segments",
+            directory="some_directory",
+            time=2,
+            list_size=3,
+            flags="delete_segments",
         )
+        feature_flags = FeatureFlags()
         rtsp_stream = RTSPSettings(url="rtsp://example.com", access_token="token")
-        process = start_ffmpeg(hls_settings, rtsp_stream)
+        process = start_ffmpeg(hls_settings, rtsp_stream, feature_flags)
         mock_popen.assert_called_once()
         assert process is not None
 

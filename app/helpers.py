@@ -1,15 +1,18 @@
 import os
+import re
 import socket
 import subprocess
 import threading
 from typing import Optional
 from typing import OrderedDict
 
+import prometheus_client as prometheus
 from etcetra import EtcdClient
 from etcetra import HostPortPair
 
-from .data import HLSSettings
-from .data import RTSPSettings
+from .configuration import FeatureFlags
+from .configuration import HLSSettings
+from .configuration import RTSPSettings
 from .logger import get_logger
 
 
@@ -20,9 +23,21 @@ def makeup_service_name(settings: RTSPSettings) -> str:
     return f"hls_streamer_{settings.url.split(':')[1][-3:]}_{settings.access_token[:3]}"
 
 
-def start_ffmpeg(hls_settings: HLSSettings, rtsp_settings: RTSPSettings) -> Optional[subprocess.Popen]:
+def log_to_prometheus(line: str, ffmpeg_frame_drops: prometheus.Gauge, ffmpeg_fps: prometheus.Gauge):
+    match = re.search(r"fps=\s*(\d+) .* drop=(\d+)", line)
+    if match:
+        fps = int(match.group(1))
+        drop = int(match.group(2))
+        ffmpeg_fps.set(fps)
+        ffmpeg_frame_drops.set(drop)
+        logger.debug(f"FPS: {fps}, Drop: {drop}")
+
+
+def start_ffmpeg(
+    hls_settings: HLSSettings, rtsp_settings: RTSPSettings, feature_flags: FeatureFlags
+) -> Optional[subprocess.Popen]:
     rtsp_url = f"{rtsp_settings.url}/{rtsp_settings.access_token}"
-    output_path = os.path.join(hls_settings.hls_directory, "stream.m3u8")
+    output_path = os.path.join(hls_settings.directory, "stream.m3u8")
     command = [
         "ffmpeg",
         "-i",
@@ -32,20 +47,28 @@ def start_ffmpeg(hls_settings: HLSSettings, rtsp_settings: RTSPSettings) -> Opti
         "-c:a",
         "aac",
         "-hls_time",
-        str(hls_settings.hls_time),
+        str(hls_settings.time),
         "-hls_list_size",
-        str(hls_settings.hls_list_size),
+        str(hls_settings.list_size),
         "-hls_flags",
-        hls_settings.hls_flags,
+        hls_settings.flags,
         output_path,
     ]
     try:
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         logger.info(f"Started FFmpeg process for {rtsp_url}")
 
+        if feature_flags.enable_prometheus:
+            logger.info("Prometheus requested, registering gauges globally.")
+            fps_gauge = prometheus.Gauge("ffmpeg_fps", "Frames Per Second")
+            drop_counter = prometheus.Gauge("ffmpeg_frame_drop", "Number of Dropped Frames")
+
         def log_output(stream) -> None:
             for line in iter(stream.readline, b""):
-                logger.info(line.decode().strip())
+                line_decoded = line.decode().strip()
+                logger.debug(line_decoded)
+                if feature_flags.enable_prometheus:
+                    log_to_prometheus(line_decoded, ffmpeg_frame_drops=drop_counter, ffmpeg_fps=fps_gauge),
 
         t = threading.Thread(target=log_output, args=(process.stdout,), daemon=True)
         t.start()

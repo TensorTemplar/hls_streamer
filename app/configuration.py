@@ -23,17 +23,26 @@ class RTSPSettings(BaseSettings):
 
 
 class HLSSettings(BaseSettings):
-    hls_directory: str = Field("hls_stream", description="Directory path for storing HLS segments and playlist files.")
-    hls_time: int = Field(
+    directory: str = Field("hls_stream", description="Directory path for storing HLS segments and playlist files.")
+    time: int = Field(
         2,
         description="Length of each HLS segment in seconds.",
         ge=1,
     )
-    hls_list_size: int = Field(
+    list_size: int = Field(
         3,
         description="Number of segments to include in the HLS playlist.",
         gt=0,
     )
-    hls_flags: str = Field("delete_segments", description="Additional flags for HLS processing.")
+    flags: str = Field("delete_segments", description="Additional flags for HLS processing.")
 
     model_config = SettingsConfigDict(env_prefix="HLS_")
+
+
+class FeatureFlags(BaseSettings):
+    enable_discovery: bool = Field(
+        False, description="Registers the streamer in etcd with its IP and Port for discovery"
+    )
+    enable_prometheus: bool = Field(False, description="Starts a prometheus server and registers metrics")
+
+    model_config = SettingsConfigDict(env_prefix="FEATURE_")

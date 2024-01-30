@@ -1,6 +1,6 @@
 [![MainCI](https://github.com/TensorTemplar/hls_streamer/actions/workflows/main-ci.yaml/badge.svg)](https://github.com/TensorTemplar/hls_streamer/actions/workflows/main-ci.yaml) ![poor-mans-codecov](https://s3.eu-central-1.amazonaws.com/public-store.droidcraft.io/hls_streamer/ci/codecov.svg)
 
-Cyclomatic complexity:  
+Cyclomatic complexity:
 ![a](https://s3.eu-central-1.amazonaws.com/public-store.droidcraft.io/hls_streamer/ci/badge_A.svg)
 ![b](https://s3.eu-central-1.amazonaws.com/public-store.droidcraft.io/hls_streamer/ci/badge_B.svg)
 ![c](https://s3.eu-central-1.amazonaws.com/public-store.droidcraft.io/hls_streamer/ci/badge_C.svg)
@@ -51,7 +51,13 @@ docker build -t droidcraft-hls-streamer:dev .
 
 3. Start the container:
 ```
-docker run -e RTSP_URL="rtsps://<your_ip>:7441" -e RTSP_ACCESS_TOKEN="<your_token>" -e PORT=<optional port if you hate 8000> -e ENABLE_DISCOVERY="True" --net=host droidcraft-hls-streamer:dev
+docker run -e RTSP_URL="rtsps://<your_ip>:7441" -e RTSP_ACCESS_TOKEN="<your_token>" -e PORT=<optional port if you hate 8000> --net=host droidcraft-hls-streamer:dev
+```
+
+if you are running ETCD and/or want Prometheus on 9090:
+```
+-e FEATURE_ENABLE_DISCOVERY=True
+-e FEATURE_ENABLE_PROMETHEUS=True
 ```
 
 check that your stream works, either via the hls supporting browser or vlc.
