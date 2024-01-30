@@ -22,6 +22,7 @@ from .logger import get_logger
 logger = get_logger(__name__)
 
 PORT = int(os.getenv("PORT", 8081))
+PROM_PORT = int(os.getenv("PROM_PORT", 8000))
 FEATURE_FLAGS = FeatureFlags()
 
 
@@ -60,7 +61,7 @@ def create_app() -> FastAPI:
     )
 
     if FEATURE_FLAGS.enable_prometheus:
-        start_http_server(9090)
+        start_http_server(PROM_PORT)
 
     start_ffmpeg(hls_settings=hls_settings, rtsp_settings=rtsp_settings, feature_flags=FEATURE_FLAGS)
 

@@ -54,10 +54,10 @@ docker build -t droidcraft-hls-streamer:dev .
 docker run -e RTSP_URL="rtsps://<your_ip>:7441" -e RTSP_ACCESS_TOKEN="<your_token>" -e PORT=<optional port if you hate 8000> --net=host droidcraft-hls-streamer:dev
 ```
 
-if you are running ETCD and/or want Prometheus on 9090:
+Optionally, if you are running ETCD and want to register the streamer under /services/... or want Prometheus export on PROM_PORT (default 8000):
 ```
 -e FEATURE_ENABLE_DISCOVERY=True
--e FEATURE_ENABLE_PROMETHEUS=True
+-e FEATURE_ENABLE_PROMETHEUS=True -e PROM_PORT=8000
 ```
 
 check that your stream works, either via the hls supporting browser or vlc.
