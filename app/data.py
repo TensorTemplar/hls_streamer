@@ -23,7 +23,7 @@ class RTSPSettings(BaseSettings):
 
 
 class HLSSettings(BaseSettings):
-    hls_directory: str = Field(..., description="Directory path for storing HLS segments and playlist files.")
+    hls_directory: str = Field("hls_stream", description="Directory path for storing HLS segments and playlist files.")
     hls_time: int = Field(
         2,
         description="Length of each HLS segment in seconds.",

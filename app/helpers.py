@@ -1,6 +1,7 @@
 import os
 import socket
 import subprocess
+import threading
 from typing import Optional
 from typing import OrderedDict
 
@@ -19,8 +20,8 @@ def makeup_service_name(settings: RTSPSettings) -> str:
     return f"hls_streamer_{settings.url.split(':')[1][-3:]}_{settings.access_token[:3]}"
 
 
-def start_ffmpeg(hls_settings: HLSSettings, rtsp_stream: RTSPSettings) -> Optional[subprocess.Popen]:
-    rtsp_url = f"{rtsp_stream.url}/{rtsp_stream.access_token}"
+def start_ffmpeg(hls_settings: HLSSettings, rtsp_settings: RTSPSettings) -> Optional[subprocess.Popen]:
+    rtsp_url = f"{rtsp_settings.url}/{rtsp_settings.access_token}"
     output_path = os.path.join(hls_settings.hls_directory, "stream.m3u8")
     command = [
         "ffmpeg",
@@ -39,8 +40,16 @@ def start_ffmpeg(hls_settings: HLSSettings, rtsp_stream: RTSPSettings) -> Option
         output_path,
     ]
     try:
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         logger.info(f"Started FFmpeg process for {rtsp_url}")
+
+        def log_output(stream) -> None:
+            for line in iter(stream.readline, b""):
+                logger.info(line.decode().strip())
+
+        t = threading.Thread(target=log_output, args=(process.stdout,))
+        t.start()
+
         return process
     except Exception as e:
         logger.error(f"Failed to start FFmpeg process: {e}")

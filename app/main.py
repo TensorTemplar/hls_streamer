@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
+from .data import HLSSettings
 from .data import RTSPSettings
 from .helpers import deregister_service_with_etcd
 from .helpers import get_etcd_client
@@ -38,16 +39,15 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     app = FastAPI(lifespan=lifespan)
     try:
-        settings = RTSPSettings()
+        rtsp_settings = RTSPSettings()
+        hls_settings = HLSSettings()
     except ValidationError as e:
         print("Invalid RTSP stream configuration:", e.json())
         os._exit(1)
 
-    hls_directory = "hls_stream"
+    os.makedirs(hls_settings.hls_directory, exist_ok=True)
 
-    os.makedirs(hls_directory, exist_ok=True)
-
-    app.mount("/hls_stream", StaticFiles(directory=hls_directory), name="hls_stream")
+    app.mount("/hls_stream", StaticFiles(directory=hls_settings.hls_directory), name="hls_stream")
 
     app.add_middleware(
         CORSMiddleware,
@@ -57,7 +57,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    start_ffmpeg(hls_directory, rtsp_stream=settings)
+    start_ffmpeg(hls_settings=hls_settings, rtsp_settings=rtsp_settings)
 
     return app
 
