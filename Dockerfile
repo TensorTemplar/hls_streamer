@@ -4,10 +4,13 @@ LABEL maintainer="x-entropy at pm.me"
 WORKDIR /usr/src/app
 
 RUN apt-get update \
-    && apt-get install -y ffmpeg \
+    && apt-get install -y ffmpeg tini \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
 
 COPY app /usr/src/app/app
 COPY requirements.txt .
@@ -21,4 +24,4 @@ ENV ENABLE_DISCOVERY "False"
 
 EXPOSE $PORT
 
-CMD uvicorn --factory app.main:create_app --host $HOST --port $PORT
+ENTRYPOINT ["tini", "--", "./entrypoint.sh"]

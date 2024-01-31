@@ -6,3 +6,5 @@ WORKDIR /usr/src/app/test
 COPY test_requirements.txt .
 COPY test .
 RUN pip install --no-cache-dir -r test_requirements.txt
+
+ENTRYPOINT ["/bin/bash", "-c"]

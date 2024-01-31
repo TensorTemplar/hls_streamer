@@ -8,3 +8,5 @@
 htmlcov/
 coverage.*
 codecov.svg
+*.ts
+*.m3u8
