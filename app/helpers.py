@@ -59,7 +59,7 @@ def start_ffmpeg(
         logger.info(f"Started FFmpeg process for {rtsp_url}")
 
         if feature_flags.enable_prometheus:
-            logger.info("Prometheus requested, registering gauges globally.")
+            logger.info(f"Prometheus requested, exporting on port: {os.getenv('PROM_PORT')}")
             fps_gauge = prometheus.Gauge("ffmpeg_fps", "Frames Per Second")
             drop_counter = prometheus.Gauge("ffmpeg_frame_drop", "Number of Dropped Frames")
 
