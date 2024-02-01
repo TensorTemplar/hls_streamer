@@ -26,7 +26,7 @@ jobs:
     - name: Start dependent containers
       run: |
         docker run -d --net=host --name etcd quay.io/coreos/etcd:v3.5.11
-        docker run -d --net=host --name testcontainer droidcraft-hls-streamer:test sleep infinity
+        docker run -d --net=host --name testcontainer droidcraft-hls-streamer:test "sleep infinity"
 
     - name: Run tests
       run: docker exec testcontainer coverage run -m pytest -vv --junit-xml=junit/junit_results.xml && docker exec testcontainer coverage xml
@@ -61,7 +61,7 @@ jobs:
 
     - name: Copy badges to Host
       run: docker cp testcontainer:/usr/src/app/badges .
-      
+
     - name: Upload badges to S3
       run: |
         aws s3 cp badges/badge_A.svg s3://public-store.droidcraft.io/hls_streamer/ci/badge_A.svg
