@@ -41,7 +41,7 @@ jobs:
         report_paths: 'junit*results.xml'
 
     - name: Run complexity analysis
-      run: docker exec testcontainer bash -c "radon cc . >> cc_results.txt && radon mi . >> mi_results.txt"
+      run: docker exec testcontainer bash -c "radon cc /usr/src/app >> cc_results.txt && radon mi /usr/src/app >> mi_results.txt"
 
     - name: Copy Radon CC Analysis results
       run: docker cp testcontainer:/usr/src/app/test/cc_results.txt .
