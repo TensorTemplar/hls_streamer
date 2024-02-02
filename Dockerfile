@@ -17,8 +17,8 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-ENV PORT 8000
-ENV PROM_PORT 8100
+ENV PORT 8081
+ENV PROM_PORT 8000
 ENV HOST 0.0.0.0
 ENV NAME hls_streamer
 ENV ENABLE_DISCOVERY "False"
