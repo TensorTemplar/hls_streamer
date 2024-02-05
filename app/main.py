@@ -13,9 +13,9 @@ from .configuration import RTSPSettings
 from .helpers import deregister_service_with_etcd
 from .helpers import get_etcd_client
 from .helpers import get_ip_address
-from .helpers import makeup_service_name
+from .helpers import make_service_name
 from .helpers import register_service_with_etcd
-from .helpers import start_ffmpeg
+from .helpers import start_gstreamer
 from .logger import get_logger
 
 
@@ -30,13 +30,13 @@ FEATURE_FLAGS = FeatureFlags()
 async def lifespan(app: FastAPI):
     if FEATURE_FLAGS.enable_discovery:
         logger.info(f"Discovery is {FEATURE_FLAGS.enable_discovery}, registering in ETCD")
-        await register_service_with_etcd(get_etcd_client(), makeup_service_name(RTSPSettings()), get_ip_address(), PORT)
+        await register_service_with_etcd(get_etcd_client(), make_service_name(RTSPSettings()), get_ip_address(), PORT)
 
     yield
 
     if FEATURE_FLAGS.enable_discovery:
         logger.info("Unregistering in ETCD")
-        await deregister_service_with_etcd(get_etcd_client(), makeup_service_name(RTSPSettings()))
+        await deregister_service_with_etcd(get_etcd_client(), make_service_name(RTSPSettings()))
 
 
 def create_app() -> FastAPI:
@@ -63,7 +63,7 @@ def create_app() -> FastAPI:
     if FEATURE_FLAGS.enable_prometheus:
         start_http_server(PROM_PORT)
 
-    start_ffmpeg(hls_settings=hls_settings, rtsp_settings=rtsp_settings, feature_flags=FEATURE_FLAGS)
+    start_gstreamer(hls_settings=hls_settings, rtsp_settings=rtsp_settings, feature_flags=FEATURE_FLAGS)
 
     return app
 

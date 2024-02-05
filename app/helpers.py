@@ -19,63 +19,80 @@ from .logger import get_logger
 logger = get_logger(__name__)
 
 
-def makeup_service_name(settings: RTSPSettings) -> str:
+def make_service_name(settings: RTSPSettings) -> str:
     return f"hls_streamer_{settings.url.split(':')[1][-3:]}_{settings.access_token[:3]}"
 
 
-def log_to_prometheus(line: str, ffmpeg_frame_drops: prometheus.Gauge, ffmpeg_fps: prometheus.Gauge):
-    match = re.search(r"fps=\s*(\d+) .* drop=(\d+)", line)
-    if match:
-        fps = int(match.group(1))
-        drop = int(match.group(2))
-        ffmpeg_fps.set(fps)
-        ffmpeg_frame_drops.set(drop)
-        logger.debug(f"FPS: {fps}, Drop: {drop}")
+import re
 
 
-def start_ffmpeg(
+def parse_gst_log(log_line: str) -> dict[str, int]:
+    patterns = {
+        "packets_received": r"packets-received.+?\)(\d+)",
+        "packets_lost": r"packets-lost.+?\)(\d+)",
+        "recv_packet_rate": r"recv-packet-rate.+?\)(\d+)",
+    }
+
+    result = {key: 0 for key in patterns.keys()}
+
+    for key, pattern in patterns.items():
+        if match := re.search(pattern, log_line):
+            result[key] = int(match.group(1))
+
+    return result
+
+
+def start_gstreamer(
     hls_settings: HLSSettings, rtsp_settings: RTSPSettings, feature_flags: FeatureFlags
 ) -> Optional[subprocess.Popen]:
     rtsp_url = f"{rtsp_settings.url}/{rtsp_settings.access_token}"
-    output_path = os.path.join(hls_settings.directory, "stream.m3u8")
+    playlist_location = os.path.join(hls_settings.directory, "stream.m3u8")
+    segment_location = os.path.join(hls_settings.directory, "segment%05d.ts")
+
     command = [
-        "ffmpeg",
-        "-i",
-        rtsp_url,
-        "-c:v",
-        "libx264",
-        "-c:a",
-        "aac",
-        "-hls_time",
-        str(hls_settings.time),
-        "-hls_list_size",
-        str(hls_settings.list_size),
-        "-hls_flags",
-        hls_settings.flags,
-        output_path,
+        "gst-launch-1.0",
+        "-v",
+        "rtspsrc",
+        f"location={rtsp_url}",
+        "tls-validation-flags=0",
+        "protocols=GST_RTSP_LOWER_TRANS_TCP",
+        "!",
+        "rtph264depay",
+        "!",
+        "h264parse",
+        "!",
+        "hlssink2",
+        f"location={segment_location}",
+        f"playlist-location={playlist_location}",
+        f"playlist-root=http://localhost:{os.getenv('PORT', 8081)}/hls_stream/",
+        f"max-files={hls_settings.list_size}",
+        f"target-duration={hls_settings.time}",
     ]
+
     try:
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        logger.info(f"Started FFmpeg process for {rtsp_url}")
+        logger.info(f"Started GStreamer process for {rtsp_url}")
 
         if feature_flags.enable_prometheus:
             logger.info(f"Prometheus requested, exporting on port: {os.getenv('PROM_PORT')}")
-            fps_gauge = prometheus.Gauge("ffmpeg_fps", "Frames Per Second")
-            drop_counter = prometheus.Gauge("ffmpeg_frame_drop", "Number of Dropped Frames")
+            loss_counter = prometheus.Gauge("packets_lost", "Number of lost packets")
+            packet_rate = prometheus.Gauge("recv_packet_rate", "Rate of packet transmission")
 
         def log_output(stream) -> None:
             for line in iter(stream.readline, b""):
                 line_decoded = line.decode().strip()
                 logger.debug(line_decoded)
                 if feature_flags.enable_prometheus:
-                    log_to_prometheus(line_decoded, ffmpeg_frame_drops=drop_counter, ffmpeg_fps=fps_gauge),
+                    stats = parse_gst_log(line_decoded)
+                    loss_counter.set(stats["packets_lost"])
+                    packet_rate.set(stats["recv_packet_rate"])
 
         t = threading.Thread(target=log_output, args=(process.stdout,), daemon=True)
         t.start()
 
         return process
     except Exception as e:
-        logger.error(f"Failed to start FFmpeg process: {e}")
+        logger.error(f"Failed to start GStreamer process: {e}")
         return None
 
 
