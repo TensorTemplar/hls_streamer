@@ -10,16 +10,14 @@ Cyclomatic complexity:
 
 ## Synopsis
 
-A simple RTSP to HLS stream converter using a ffmpeg subprocess with some scaffolding to make it easy to scale by running a container per source RTSP(s) stream.
+A simple RTSP to HLS stream converter using a gstreamer subprocess with some scaffolding to make it easy to scale by running a container per source RTSP(s) stream.
 
 It will publish publishing `http://<hostname>:<port>/hls_stream/stream.m3u8` by default and optionally register itself in etcd under `/services/hls_streamer_{last 3 characters of source stream ip}` - to enable this pass `ENABLE_DISCOVERY="True"` as an environment variable.
 
 
 ## Requirements
 
-ffmpeg on the host and docker
-
-Python 3.11+ for the tests
+Docker installed on your machine, `--net=host` may not work on all platforms.
 
 ## How to run tests
 
